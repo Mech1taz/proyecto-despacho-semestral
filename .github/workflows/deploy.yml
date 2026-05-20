@@ -65,5 +65,5 @@ jobs:
           docker-compose up -d --remove-orphans
           
           # Imprimir el estado final en el log de GitHub para ver si revivió
-          echo "=== ESTADO DE LOS CONTENEDORES ==="
+          echo "===ESTADO DE LOS CONTENEDORES==="
           docker ps -a

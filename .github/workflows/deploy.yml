@@ -50,17 +50,20 @@ jobs:
         script: |
           cd ~/proyecto_semestral
           
-          # Inyectar credenciales del laboratorio directo en la sesion de SSH
           export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
           export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
           export AWS_SESSION_TOKEN="${{ secrets.AWS_SESSION_TOKEN }}"
           export AWS_DEFAULT_REGION="us-east-1"
           
-          # Autenticar Docker con AWS ECR usando las variables recien inyectadas
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
           
-          # Descargar las nuevas imagenes compiladas por GitHub
-          docker-compose pull
+          # Forzar la caída de lo que esté bugeado y limpiar la ram de la EC2
+          docker-compose down
           
-          # Reiniciar los contenedores en segundo plano aplicando los cambios
+          # Descargar todo fresco y levantar de cero
+          docker-compose pull
           docker-compose up -d --remove-orphans
+          
+          # Imprimir el estado final en el log de GitHub para ver si revivió
+          echo "=== ESTADO DE LOS CONTENEDORES ==="
+          docker ps -a

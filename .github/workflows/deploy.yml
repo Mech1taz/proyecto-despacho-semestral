@@ -61,6 +61,6 @@ jobs:
           
           # Descargar las nuevas imagenes compiladas por GitHub
           docker-compose pull
-          
+          #gundam
           # Reiniciar los contenedores en segundo plano aplicando los cambios
           docker-compose up -d --remove-orphans

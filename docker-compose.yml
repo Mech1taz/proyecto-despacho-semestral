@@ -1,64 +1,65 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  mysql:
+  # 1. Base de Datos MySQL
+  base-datos:
     image: mysql:8.0
-    container_name: proyecto_mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: proyecto
+    container_name: mysql_tienda_local
     ports:
       - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-
-  ventas-back:
-    build:
-      context: ./back-Ventas_SpringBoot/Springboot-API-REST
-      dockerfile: Dockerfile
-    container_name: ventas-back
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
     environment:
-      DB_ENDPOINT: mysql
-      DB_PORT: 3306
-      DB_USERNAME: root
-      DB_PASSWORD: rootpassword
-      DB_NAME: ventas_db
-    depends_on:
-      - mysql
+      MYSQL_ROOT_PASSWORD: DespachoSeguro2026
+      MYSQL_DATABASE: tienda_despacho
+    networks:
+      - red-datos
+    restart: always
 
-  despacho-back:
-    build:
-      context: ./back-Despachos_SpringBoot/Springboot-API-REST-DESPACHO
-      dockerfile: Dockerfile
-    container_name: despacho-back
-    restart: unless-stopped
+  # 2. Microservicio de Ventas
+  backend-ventas:
+    build: ./back-Ventas_SpringBoot/Springboot-API-REST
+    container_name: spring_ventas_local
     ports:
       - "8081:8081"
     environment:
-      DB_ENDPOINT: mysql
-      DB_PORT: 3306
-      DB_USERNAME: root
-      DB_PASSWORD: rootpassword
-      DB_NAME: despacho_db
+      SPRING_DATASOURCE_URL: jdbc:mysql://base-datos:3306/tienda_despacho?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: DespachoSeguro2026
+    networks:
+      - red-core
+      - red-datos
     depends_on:
-      - mysql
+      - base-datos
+    restart: always
 
-  front:
-    build:
-      context: ./front_despacho
-      dockerfile: Dockerfile
-    container_name: front-despacho
-    restart: unless-stopped
+  # 3. Microservicio de Despachos
+  backend-despachos:
+    build: ./back-Despachos_SpringBoot/Springboot-API-REST-DESPACHO
+    container_name: spring_despachos_local
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://base-datos:3306/tienda_despacho?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: DespachoSeguro2026
+    networks:
+      - red-core
+      - red-datos
+    depends_on:
+      - base-datos
+    restart: always
+
+  # 4. Frontend de la aplicación
+  frontend-despacho:
+    build: ./front_despacho
+    container_name: web_despacho_local
     ports:
       - "80:80"
-    depends_on:
-      - ventas-back
-      - despacho-back
+    networks:
+      - red-core
+    restart: always
 
-volumes:
-  mysql-data:
-    driver: local
+networks:
+  red-core:
+    driver: bridge
+  red-datos:
+    driver: bridge

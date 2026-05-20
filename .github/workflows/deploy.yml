@@ -2,7 +2,7 @@ name: Despliegue automatico a AWS ECR
 
 on:
   push:
-    branches: [ "main" ] # Se activa automáticamente al hacer push a main
+    branches: [ "main" ]
 
 jobs:
   build-and-push:
@@ -28,16 +28,14 @@ jobs:
       env:
         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
-        # 1. Construir y subir el Backend de Ventas (Tag: ventas)
-        # Bajamos hasta la subcarpeta interna donde esta el pom.xml y el Dockerfile
+        # 1. Backend de Ventas (Bajando hasta la carpeta interna donde esta el pom.xml)
         docker build -t $REGISTRY/ecr_repo_url_backend:ventas ./back-Ventas_SpringBoot/Springboot-API-REST
         docker push $REGISTRY/ecr_repo_url_backend:ventas
 
-        # 2. Construir y subir el Backend de Despachos (Tag: despachos)
-        # Bajamos hasta la subcarpeta interna correspondiente
+        # 2. Backend de Despachos (Bajando hasta su carpeta interna correspondiente)
         docker build -t $REGISTRY/ecr_repo_url_backend:despachos ./back-Despachos_SpringBoot/Springboot-API-REST-DESPACHO
         docker push $REGISTRY/ecr_repo_url_backend:despachos
 
-        # 3. Construir y subir el Frontend (Tag: latest)
+        # 3. Frontend de Despacho
         docker build -t $REGISTRY/ecr_repo_url_frontend:latest ./front_despacho
         docker push $REGISTRY/ecr_repo_url_frontend:latest

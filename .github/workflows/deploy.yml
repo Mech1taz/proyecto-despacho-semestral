@@ -57,9 +57,6 @@ jobs:
           
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
           
-          # Forzar la caída de lo que esté bugeado y limpiar la ram de la EC2
-          docker-compose down
-          
           # Descargar todo fresco y levantar de cero
           docker-compose pull
           docker-compose up -d --remove-orphans

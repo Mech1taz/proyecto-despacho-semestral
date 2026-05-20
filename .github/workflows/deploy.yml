@@ -50,7 +50,13 @@ jobs:
         script: |
           cd ~/proyecto_semestral
           
-          # Autenticar Docker con AWS ECR desde la EC2
+          # Inyectar credenciales del laboratorio directo en la sesion de SSH
+          export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+          export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          export AWS_SESSION_TOKEN="${{ secrets.AWS_SESSION_TOKEN }}"
+          export AWS_DEFAULT_REGION="us-east-1"
+          
+          # Autenticar Docker con AWS ECR usando las variables recien inyectadas
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
           
           # Descargar las nuevas imagenes compiladas por GitHub

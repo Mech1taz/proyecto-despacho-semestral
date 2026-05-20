@@ -1,4 +1,4 @@
-name: Despliegue automatico a AWS ECR
+name: Despliegue automatico a AWS EC2
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-push:
-    name: Compilar y subir imagenes a AWS
+    name: Compilar, Subir a ECR y Desplegar en EC2
     runs-on: ubuntu-latest
 
     steps:
@@ -28,14 +28,32 @@ jobs:
       env:
         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
-        # 1. Backend de Ventas (Bajando hasta la carpeta interna donde esta el pom.xml)
+        # 1. Backend de Ventas
         docker build -t $REGISTRY/ecr_repo_url_backend:ventas ./back-Ventas_SpringBoot/Springboot-API-REST
         docker push $REGISTRY/ecr_repo_url_backend:ventas
 
-        # 2. Backend de Despachos (Bajando hasta su carpeta interna correspondiente)
+        # 2. Backend de Despachos
         docker build -t $REGISTRY/ecr_repo_url_backend:despachos ./back-Despachos_SpringBoot/Springboot-API-REST-DESPACHO
         docker push $REGISTRY/ecr_repo_url_backend:despachos
 
         # 3. Frontend de Despacho
         docker build -t $REGISTRY/ecr_repo_url_frontend:latest ./front_despacho
         docker push $REGISTRY/ecr_repo_url_frontend:latest
+
+    - name: Desplegar en la EC2 via SSH
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ec2-user # <-- Configurado para Amazon Linux
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd ~/proyecto_semestral
+          
+          # Autenticar Docker con AWS ECR desde la EC2
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
+          
+          # Descargar las nuevas imagenes compiladas por GitHub
+          docker-compose pull
+          
+          # Reiniciar los contenedores en segundo plano aplicando los cambios
+          docker-compose up -d --remove-orphans
